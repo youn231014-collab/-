@@ -128,7 +128,7 @@ body[data-album=B] .disc{background:radial-gradient(circle,#2a2530,#0e0c12)}
 const $=id=>document.getElementById(id),au=$('au'),body=document.body,stage=$('stage');
 const albums={
 A:{title:'윤회 輪廻',i:0,tracks:[{"t":"들에 나뒹구는 목", "a": "카무이 가쿠포", "src":"audio/t01.m4a"}, {"t":"글래스레드의 초상", "a": "GUMI", "src":"audio/t02.m4a"}, {"t":"네메시스의 총구", "a": "GUMI", "src":"audio/t03.m4a"}, {"t":"Drug of Gold", "a": "KAITO", "src":"audio/t04.m4a"}, {"t":"去り人達のワルツ", "a": "鏡音リン", "src":"audio/t05.m4a"}, {"t":"最後のリボルバー", "a": "GUMI", "src":"audio/t06.m4a"}, {"t":"悪ノ娘 (中世物語風オリジナル)", "a": "鏡音リン", "src":"audio/t07.m4a"}, {"t":"Reach For The Stars (待ち続けた手紙)", "a": "鏡音レン", "src":"audio/t08.m4a"}, {"t":"リグレットメッセージ", "a": "鏡音リン", "src":"audio/t09.m4a"}, {"t":"ヴェノマニア公の狂気 (中世物語風オリジナル)", "a": "神威がくぽ", "src":"audio/t10.m4a"}, {"t":"円尾坂の仕立屋 (和風物語風オリジナル)", "a": "巡音ルカ", "src":"audio/t11.m4a"}, {"t":"悪ノ召使 (中世物語風オリジナル)", "a": "鏡音レン", "src":"audio/t12.m4a"}, {"t":"悪徳のジャッジメント (法廷物語風オリジナル)", "a": "KAITO", "src":"audio/t13.m4a"}, {"t":"悪食娘コンチータ (中世物語風オリジナル)", "a": "MEIKO", "src":"audio/t14.m4a"}, {"t":"眠らせ姫からの贈り物 (中世物語風オリジナル)", "a": "初音ミク", "src":"audio/t15.m4a"}, {"t":"箱庭の少女 (ぜんまい仕掛けの子守唄2)", "a": "初音ミク", "src":"audio/t16.m4a"}]},
-B:{title:'계절 季節',i:0,tracks:[{t:'계절 季節',a:'HopeMaFei',src:''}]}};
+B:{title:'계절 季節',i:0,tracks:[{"t": "番凩 (オリジナル)", "a": "MEIKO・KAITO", "src": "audio/b01.m4a"}, {"t": "番凩 (カバー)", "a": "巡音ルカ・神威がくぽ", "src": "audio/b02.m4a"}, {"t": "ココロ / Kokoro (Heart) (VOCALOIDカバー)", "a": "神威がくぽ Kamui Gakupo V4", "src": "audio/b03.m4a"}, {"t": "サマーアイドル", "a": "初音ミク・鏡音リン", "src": "audio/b04.m4a"}, {"t": "사계절의 날개", "a": "카가미네 린・렌", "src": "audio/b05.m4a"}, {"t": "Connecting (Collaboration)", "a": "halyosy feat. Vocaloid", "src": "audio/b06.m4a"}, {"t": "Fire◎Flower", "a": "halyosy feat. 鏡音レン", "src": "audio/b07.m4a"}, {"t": "スノーマン (Rerec)", "a": "halyosy ft. KAITO", "src": "audio/b08.m4a"}, {"t": "Melt CPK! Remix", "a": "ryo (supercell)", "src": "audio/b09.m4a"}, {"t": "オーバーロストラブ / 吐息.", "a": "MEIKO", "src": "audio/b10.m4a"}, {"t": "オゾン - 花々、春はまた廻る 2026ver", "a": "初音ミク・鏡音リン・鏡音レン・巡音ルカ・MEIKO・KAITO", "src": "audio/b11.m4a"}, {"t": "夏恋花火", "a": "40mP feat. GUMI", "src": "audio/b12.m4a"}, {"t": "紅一葉", "a": "巡音ルカ", "src": "audio/b13.m4a"}, {"t": "春泥棒 (GUMI SV カバー / ヨルシカ)", "a": "GUMI SV", "src": "audio/b14.m4a"}]}};
 const cache={},tried={};function url(s){return cache[s]||s}
 const order=['A','B'],cov=k=>document.querySelector('#'+k+' img').src;
 document.querySelector('.bgA img').src=cov('A');document.querySelectorAll('.bgS img').forEach((m,i)=>m.src=cov(i?'B':'A'));document.querySelector('.bgB img').src=cov('B');
@@ -141,7 +141,7 @@ function setPlaying(on){const m=$('mini');if(m)m.dataset.on=on?'1':'0';if(cur)$(
 function fill(k){const A0=albums[k],tr=A0.tracks[A0.i],a={title:A0.title,artist:tr.a,song:tr.t,blob:tr.blob,src:tr.src},img=cov(k),f='none';
  $('title').textContent=a.title;$('artist').textContent=a.artist;$('now').textContent=a.song;$('nowArtist').textContent=a.artist+' · '+a.title;
  ['discImg','frontImg','miniImg'].forEach(i=>{if($(i).dataset.k!==k){$(i).src=img;$(i).dataset.k=k;$(i).style.filter=f}});
- $('miniT').textContent=a.song;$('miniA').textContent=a.artist;$('hint').textContent=(a.blob||a.src.startsWith('audio/'))?'':'이 앨범은 아직 음원이 없어요';$('file').parentNode.style.display=k==='A'?'none':'';
+ $('miniT').textContent=a.song;$('miniA').textContent=a.artist;$('hint').textContent=(a.blob||a.src.startsWith('audio/'))?'':'이 앨범은 아직 음원이 없어요';$('file').parentNode.style.display='none';
  if(a.blob||a.src){au.src=a.blob||url(a.src);au.load()}else{au.removeAttribute('src');au.load()}$('seek').value=0;$('cur').textContent='0:00';
  if('mediaSession' in navigator)navigator.mediaSession.metadata=new MediaMetadata({title:a.song,artist:a.artist,album:a.title,artwork:[{src:img,sizes:'640x640'}]})}
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -156,7 +156,7 @@ async function openAlbum(k,auto){if(busy)return;busy=true;
 async function choose(k,auto){if(isOpen&&cur===k)return closeAlbum();if(isOpen){await closeAlbum()}openAlbum(k,auto)}
 order.forEach(k=>$(k).onclick=()=>choose(k));
 $('close').onclick=closeAlbum;$('miniOpen').onclick=()=>cur&&choose(cur);$('miniImg').onclick=()=>cur&&choose(cur);
-function toggle(){if(!cur)return;au.paused?au.play().catch(()=>{$('hint').textContent=cur==='A'?'재생에 실패했어요. 다시 눌러 주세요'+(au.error?' (코드 '+au.error.code+')':''):'재생할 음원이 없습니다. 음원 불러오기를 눌러 주세요'}):au.pause()}
+function toggle(){if(!cur)return;au.paused?au.play().catch(()=>{$('hint').textContent=cur?'재생에 실패했어요. 다시 눌러 주세요'+(au.error?' (코드 '+au.error.code+')':''):'재생할 음원이 없습니다. 음원 불러오기를 눌러 주세요'}):au.pause()}
 $('play').onclick=toggle;$('miniPlay').onclick=toggle;
 function step(d){if(!cur)return;const A=albums[cur];if(d<0&&au.currentTime>3){au.currentTime=0;return}A.i=(A.i+d+A.tracks.length)%A.tracks.length;fill(cur);list();au.play().catch(()=>{})}
 function list(){const A=albums[cur];$('tl').innerHTML='';A.tracks.forEach((t,n)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent=(n+1)+'. '+t.t+' — '+t.a;if(n===A.i)b.className='cur';b.onclick=()=>{A.i=n;fill(cur);list();au.play().catch(()=>{})};li.appendChild(b);$('tl').appendChild(li)});const c=$('tl').querySelector('.cur');if(c)c.scrollIntoView({block:'nearest'})}
@@ -165,7 +165,7 @@ $('rep').onclick=()=>{au.loop=!au.loop;$('rep').classList.toggle('on',au.loop);$
 $('volb').onclick=()=>$('vol').hidden=!$('vol').hidden;$('volr').oninput=e=>au.volume=e.target.value;
 au.onerror=()=>{const s=au.getAttribute('src')||'';if(s.startsWith('audio/')&&!tried[s]){tried[s]=1;$('hint').textContent='곡을 내려받는 중…';
  fetch(s,{credentials:'include'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.blob()}).then(b=>{cache[s]=URL.createObjectURL(new Blob([b],{type:'audio/mp4'}));au.src=cache[s];au.load();$('hint').textContent='';au.play().catch(()=>{$('hint').textContent='재생 버튼을 한 번 더 눌러 주세요'})}).catch(e=>{$('hint').textContent='음원을 불러오지 못했어요 ('+e.message+')'});return}
- if(cur==='A')$('hint').textContent='음원을 불러오지 못했어요 (코드 '+(au.error?au.error.code:'?')+')'};au.onplay=()=>{setPlaying(true);if(cur==='A')$('hint').textContent=''};au.onpause=()=>setPlaying(false);au.onended=()=>{if(!au.loop){if(albums[cur].tracks.length>1)step(1);else{setPlaying(false);au.currentTime=0}}};
+ if(cur)$('hint').textContent='음원을 불러오지 못했어요 (코드 '+(au.error?au.error.code:'?')+')'};au.onplay=()=>{setPlaying(true);if(cur)$('hint').textContent=''};au.onpause=()=>setPlaying(false);au.onended=()=>{if(!au.loop){if(albums[cur].tracks.length>1)step(1);else{setPlaying(false);au.currentTime=0}}};
 au.onloadedmetadata=()=>$('dur').textContent=fmt(au.duration);
 au.ontimeupdate=()=>{$('cur').textContent=fmt(au.currentTime);if(au.duration)$('seek').value=au.currentTime/au.duration*100};
 $('seek').oninput=e=>{if(au.duration)au.currentTime=e.target.value/100*au.duration};
