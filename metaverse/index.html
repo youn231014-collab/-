@@ -1285,6 +1285,7 @@ const joyEnd=e=>{if(e.pointerId!==joy.id)return;joy.id=null;joy.x=joy.y=0;knob.s
 function toLocal(x,z){const a=-tt.rotation.y,c=Math.cos(a),s=Math.sin(a);return[x*c+z*s,-x*s+z*c];}
 function blocked(x,z){const r=Math.hypot(x,z);if(r>ROUT+.2)return true;if(r<2.35)return true;if(stageAnim&&r<RAD+.8)return true;
  if(stage===1)return r<RAD&&medBlocked(x,z);const [lx,lz]=toLocal(x,z);
+ if(GK.blocks(lx,lz))return true;
  if(Math.abs(lx)<.2&&Math.abs(lz)>SP0-.1&&Math.abs(lz)<SP0+SPN*(SPW+SPG))return true;if(Math.abs(lz)<.2&&Math.abs(lx)>SP0-.1&&Math.abs(lx)<SP0+SPN*(SPW+SPG))return true;return false;}
 function ground(x,z){const r=Math.hypot(x,z);if(r<RAD+.5)return SY;if(r>=ROW0&&r<ROUT+.6)return(Math.min(ROWS-1,Math.floor((r-ROW0)/ROW_D))+1)*ROW_H;return 0;}
 
@@ -1301,6 +1302,52 @@ document.querySelectorAll('.sk').forEach(b=>b.addEventListener('click',()=>setSk
 function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clearTimeout(el._h);el._h=setTimeout(()=>el.style.opacity=0,1400);}
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);bloom.setSize(innerWidth,innerHeight);if(ao)ao.setSize(innerWidth,innerHeight);});
+
+/* ---------- 🍁 AUTUMN: Gackpoid Ver1.1 「番凩 (カバー)」 performer ---------- */
+// 곡 맞춤 듀엣 모션(가쿠포 파트에서만 립싱크)을 구운 GLB를 가을 구역에 세우고, ../audio/b02.m4a 와 동기화합니다.
+// 무대(tt)에 붙어 있어 무대가 회전·반전될 때 함께 움직입니다. 가까이 갈수록 노래가 크게 들리는 공간 음향.
+const GK={pos:[-3.1,6.5],face:Math.atan2(-3.1,6.5),r:.42,obj:null,mixer:null,act:null,dur:0,audio:null,listener:null,buf:null,start:0,playing:false,muted:false,hinted:false,faces:[]};
+GK.blocks=(lx,lz)=>!!GK.obj&&Math.hypot(lx-GK.pos[0],lz-GK.pos[1])<GK.r+.25;
+(async()=>{try{
+ const [{GLTFLoader},{MeshoptDecoder}]=await Promise.all([import('three/addons/loaders/GLTFLoader.js'),import('three/addons/libs/meshopt_decoder.module.js')]);
+ const g=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('gakupo_bankogarashi.glb');
+ const o=g.scene;o.name='Gackpoid_Bankogarashi';
+ o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;c.frustumCulled=false;
+  for(const m of [].concat(c.material)){m.envMapIntensity=.6;m.roughness=Math.max(m.roughness??.85,.6);}
+  if(c.morphTargetDictionary)GK.faces.push(c);}});
+ add(o,GK.pos[0],GK.pos[1],SY,GK.face);
+ GK.obj=o;GK.mixer=new THREE.AnimationMixer(o);const clip=g.animations[0];GK.act=GK.mixer.clipAction(clip);GK.act.play();GK.dur=clip.duration;
+ // name plate
+ {const c=document.createElement('canvas');c.width=512;c.height=128;const q=c.getContext('2d');
+  q.fillStyle='rgba(20,12,24,.72)';q.beginPath();q.roundRect(4,8,504,112,56);q.fill();q.strokeStyle='#f0a058';q.lineWidth=4;q.stroke();
+  q.fillStyle='#ffe3c2';q.font='bold 44px sans-serif';q.textAlign='center';q.textBaseline='middle';q.fillText('🍁 神威がくぽ · 番凩',256,66);
+  const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false}));sp.scale.set(1.3,.325,1);sp.position.y=2.25;o.add(sp);GK.plate=sp;}
+ GK.dbg=()=>({inHall,stage,stageAnim:!!stageAnim,muted:GK.muted,playing:GK.playing,ctx:GK.listener&&GK.listener.context.state});window.__gakupo=GK;
+}catch(e){console.warn('Gackpoid performer not loaded',e);}})();
+function gkStartAudio(){
+ if(GK.audio||!GK.obj)return;
+ GK.listener=new THREE.AudioListener();camera.add(GK.listener);
+ GK.audio=new THREE.PositionalAudio(GK.listener);GK.audio.setRefDistance(3.2);GK.audio.setRolloffFactor(1.4);GK.audio.setMaxDistance(60);GK.audio.setLoop(true);
+ const head=GK.obj.getObjectByName('Head');(head||GK.obj).add(GK.audio);
+ new THREE.AudioLoader().load('../audio/b02.m4a',buf=>{GK.buf=buf;GK.audio.setBuffer(buf);gkPlay();},undefined,e=>console.warn('b02 audio',e));
+}
+function gkPlay(){if(!GK.buf||GK.playing||GK.muted)return;const ctx=GK.listener.context;if(ctx.state==='suspended')ctx.resume();
+ const off=GK.pausedAt||0;GK.audio.offset=off;GK.audio.play();GK.start=ctx.currentTime-off;GK.playing=true;}
+function gkPause(){if(!GK.playing)return;GK.pausedAt=gkTime();GK.audio.pause();GK.playing=false;}
+function gkTime(){if(GK.playing&&GK.buf)return (GK.listener.context.currentTime-GK.start)%GK.buf.duration;return GK.act?GK.act.time:0;}
+addEventListener('pointerdown',()=>{if(inHall)gkStartAudio();},{passive:true});
+addEventListener('keydown',e=>{if(!inHall||(e.target&&e.target.tagName==='INPUT'))return;gkStartAudio();
+ if(e.code==='KeyG'&&GK.audio){GK.muted=!GK.muted;if(GK.muted){gkPause();toast('🍁 가쿠포 공연 음악 끔 (G)');}else{gkPlay();toast('🍁 가쿠포 공연 음악 켬 (G)');}}});
+function gkTick(dt){
+ if(!GK.mixer)return;
+ const onFace=stageAnim?stageAnim.to===0:stage===0;  // 사계 무대가 위로 오는 동안 재생, 중세 무대로 바뀌면 정지
+ GK.obj.visible=stage===0||!!stageAnim;
+ if(!inHall||!onFace){gkPause();}else if(GK.buf&&!GK.muted&&!GK.playing)gkPlay();
+ if(GK.playing)GK.mixer.setTime(Math.min(gkTime(),GK.dur-1e-3));else GK.mixer.update(inHall?dt:0);
+ if(inHall&&!GK.hinted&&GK.obj){const w=new THREE.Vector3();GK.obj.getWorldPosition(w);if(camera.position.distanceTo(w)<9){GK.hinted=true;toast('🍁 가을 구역 — 가쿠포 「番凩」 공연 중 (G: 음악 켜기/끄기)');}}
+ if(GK.plate){const w=new THREE.Vector3();GK.obj.getWorldPosition(w);GK.plate.visible=camera.position.distanceTo(w)<14;}
+}
 
 /* ---------- loop ---------- */
 setSky(1);setMode('orbit');$('#help').innerHTML=HELP.orbit;
@@ -1511,6 +1558,7 @@ function tick(){
   walkIn=Math.min(1,walkIn+dt/1.3);const wk=Math.min(1,dt*(1.2+6.8*walkIn*walkIn));camera.position.lerp(tmpV,wk);
   const lt=new THREE.Vector3(A.x,A.y+1.35,A.z);controls.target.lerp(lt,wk);camera.lookAt(controls.target);
  }else controls.update();
+ gkTick(dt);
  updateRemotes(dt,t);
  composer.render(dt);requestAnimationFrame(tick);}
 requestAnimationFrame(()=>{tick();requestAnimationFrame(()=>{$('#load').classList.add('hide');});});
