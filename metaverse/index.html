@@ -1331,18 +1331,20 @@ GK.blocks=(lx,lz)=>{for(const c of GK.cast){if(!c.lp)continue;if(Math.hypot(lx-c
   GK.cast.push({name:files[i][0],obj:o,mx,duet,idle,center,hit,lp:null});});
  // name plate + sound source: follow the midpoint between the two dancers
  {const c=document.createElement('canvas');c.width=640;c.height=170;const q=c.getContext('2d');
-  // 배경 없이 글자만 (진한 테두리로 어디서나 읽히게)
+  // 배경 없이 테두리선 + 테두리 글자
+  q.beginPath();q.roundRect(6,8,628,154,40);q.lineWidth=5;q.strokeStyle='#f0a058';q.stroke();
   q.textAlign='center';q.textBaseline='middle';q.font='bold 42px sans-serif';q.lineJoin='round';
   q.lineWidth=9;q.strokeStyle='rgba(30,14,10,.9)';q.strokeText('🍁 神威がくぽ & 鏡音レン · 番凩',320,58);q.fillStyle='#ffe3c2';q.fillText('🍁 神威がくぽ & 鏡音レン · 番凩',320,58);
   GK.plateCtx={c,q};const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false}));sp.scale.set(1.35,.36,1);grp.add(sp);GK.plate=sp;
   GK.spk=new THREE.Object3D();grp.add(GK.spk);}
+ if(typeof ao!=='undefined'&&ao&&!ao.__spritesOff){const ov=ao.overrideVisibility.bind(ao);ao.overrideVisibility=function(){ov();this.scene.traverse(o=>{if(o.isSprite)o.visible=false;});};ao.__spritesOff=true;}
  gkUI();
  GK.dbg=()=>({inHall,stage,stageAnim:!!stageAnim,show:GK.show,want:GK.want,muted:GK.muted,playing:GK.playing,w:+GK.w.toFixed(2),ctx:GK.listener&&GK.listener.context.state,btn:$('#gkBtn')&&$('#gkBtn').textContent});
  window.__gakupo=GK;
 }catch(e){console.warn('Bankogarashi duet not loaded',e);}})();
 function gkPlateHint(t){if(!GK.plateCtx)return;const {q}=GK.plateCtx;
- q.clearRect(0,90,640,80);q.font='bold 32px sans-serif';q.textAlign='center';q.textBaseline='middle';q.lineJoin='round';
+ q.clearRect(14,92,612,62);q.font='bold 32px sans-serif';q.textAlign='center';q.textBaseline='middle';q.lineJoin='round';
  q.lineWidth=8;q.strokeStyle='rgba(30,14,10,.9)';q.strokeText(t,320,120);q.fillStyle='#ffc58a';q.fillText(t,320,120);
  GK.plate.material.map.needsUpdate=true;}
 // 오디오: 첫 사용자 입력에서 컨텍스트를 열고(자동재생 정책), 공연을 요청하면 음원을 받습니다.
