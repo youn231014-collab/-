@@ -805,10 +805,10 @@ const waterMat=M({color:'#169cc4',roughness:.05,metalness:.05,transparent:true,o
 }
 /* ---------- WINTER (q3: +x, +z) ---------- */
 {const g=new THREE.Group();tt.add(g);
- add(pine(1.05),9,1.5);add(pine(.8),8.5,3.4);add(pine(1.05),1.5,9);add(pine(.8),3.4,8.5);
+ add(pine(1.05),9,1.5);add(pine(.8),8.5,3.4);add(pine(1.05),7.3,5.9);add(pine(.8),5.7,7.3);   // 앞쪽(바깥) 시야는 린·렌 공연을 위해 비워 둠
  
- for(const [x,z,s] of [[3.5,2.2,.9],[4.4,3,.7],[2.9,3.7,.55],[5.8,1.5,.75],[4.6,5.3,.85],[2.2,6.1,.6]]){const b=iceBlock(s);add(b,x,z,SY+s*.5);b.castShadow=true;}
- for(let i=0;i<12;i++){let x,z;do{x=R(1,9.2);z=R(1,9.2);}while(Math.hypot(x,z)>9.4);const m=new THREE.Mesh(new THREE.SphereGeometry(1,20,12),snowMat);m.scale.set(R(.4,1.1),R(.12,.32),R(.4,1.1));add(m,x,z,SY);}
+ for(const [x,z,s] of [[3.5,2.2,.9],[4.4,3,.7],[2.9,3.7,.55],[5.8,1.5,.75],[4.6,5.3,.85],[6.6,4.0,.6]]){const b=iceBlock(s);add(b,x,z,SY+s*.5);b.castShadow=true;}
+ for(let i=0;i<12;i++){let x,z;do{x=R(1,9.2);z=R(1,9.2);}while(Math.hypot(x,z)>9.4||Math.hypot(x-2.3,z-5.6)<2.4);const m=new THREE.Mesh(new THREE.SphereGeometry(1,20,12),snowMat);m.scale.set(R(.4,1.1),R(.12,.32),R(.4,1.1));add(m,x,z,SY);}
  const drift=new THREE.Mesh(new THREE.TorusGeometry(9.55,.25,8,60,HALF*.96),snowMat);drift.rotation.x=HALF;drift.scale.z=.5;drift.rotation.z=-.02;drift.position.y=SY;g.add(drift);
 }
 
@@ -1275,7 +1275,7 @@ let drag=null;
 canvas.addEventListener('pointerdown',e=>{drag={id:e.pointerId,x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false};});
 addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>5)drag.moved=true;
  if(mode==='walk'&&drag.moved){const k=e.pointerType==='touch'?.007:.0045;camYaw.v-=dx*k;camPitch.v=Math.max(-.15,Math.min(1.2,camPitch.v+dy*k));}});
-addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;if(!drag.moved&&e.target===canvas){const ndc=new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1),rc=new THREE.Raycaster();rc.setFromCamera(ndc,camera);if(!(GK.hitTest&&GK.hitTest(e))&&rc.intersectObjects([hg,hgMed],true).length)requestStage();}drag=null;});
+addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;if(!drag.moved&&e.target===canvas){const ndc=new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1),rc=new THREE.Raycaster();rc.setFromCamera(ndc,camera);if(!DUETS.some(d=>d.hitTest&&d.hitTest(e))&&rc.intersectObjects([hg,hgMed],true).length)requestStage();}drag=null;});
 canvas.addEventListener('wheel',e=>{if(mode==='walk'){camDist=Math.max(2.5,Math.min(12,camDist+e.deltaY*.004));}},{passive:true});
 const joy={x:0,y:0,id:null},joyEl=$('#joy'),knob=$('#knob');
 function joyMove(e){const r=joyEl.getBoundingClientRect();let x=(e.clientX-r.left-r.width/2)/(r.width/2),y=(e.clientY-r.top-r.height/2)/(r.height/2);const l=Math.hypot(x,y);if(l>1){x/=l;y/=l;}joy.x=x;joy.y=y;knob.style.transform=`translate(${x*34}px,${y*34}px)`;}
@@ -1286,7 +1286,7 @@ const joyEnd=e=>{if(e.pointerId!==joy.id)return;joy.id=null;joy.x=joy.y=0;knob.s
 function toLocal(x,z){const a=-tt.rotation.y,c=Math.cos(a),s=Math.sin(a);return[x*c+z*s,-x*s+z*c];}
 function blocked(x,z){const r=Math.hypot(x,z);if(r>ROUT+.2)return true;if(r<2.35)return true;if(stageAnim&&r<RAD+.8)return true;
  if(stage===1)return r<RAD&&medBlocked(x,z);const [lx,lz]=toLocal(x,z);
- if(GK.blocks(lx,lz))return true;
+ if(DUETS.some(d=>d.blocks(lx,lz)))return true;
  if(Math.abs(lx)<.2&&Math.abs(lz)>SP0-.1&&Math.abs(lz)<SP0+SPN*(SPW+SPG))return true;if(Math.abs(lz)<.2&&Math.abs(lx)>SP0-.1&&Math.abs(lx)<SP0+SPN*(SPW+SPG))return true;return false;}
 function ground(x,z){const r=Math.hypot(x,z);if(r<RAD+.5)return SY;if(r>=ROW0&&r<ROUT+.6)return(Math.min(ROWS-1,Math.floor((r-ROW0)/ROW_D))+1)*ROW_H;return 0;}
 
@@ -1304,121 +1304,139 @@ function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clear
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);bloom.setSize(innerWidth,innerHeight);if(ao)ao.setSize(innerWidth,innerHeight);});
 
-/* ---------- 🍁 AUTUMN: 「番凩 / Wintry Winds」 duet — 神威がくぽ (male part) & 巡音ルカ (female part) ---------- */
-// 평소에는 두 사람이 첫 자세로 서서 대기(Idle)하고, 둘 중 하나를 클릭하거나 아래 「🍁 듀엣 공연」 버튼을 누르면 공연을 시작합니다.
-// 모션: Wintry Winds (Magical Mirai) — Motion by Nabix / Durles / Rellis Starlab, Motion Actors Nabix & Tia Lee,
-//       Choreo by SEGA & Crypton Future Media, Motion Retarget by Durles, Facials by Durles / Leomarie
-// 사이트 음원 ../audio/b02.m4a 의 시간에 맞춰 구운 모션을 오디오 시계로 재생합니다. 두 사람은 무대(tt)에 붙어 함께 회전·반전됩니다.
-const GK={size:{luka:1.12},title:'神威がくぽ & 巡音ルカ · 番凩',pos:[-2.3,5.4],face:0.087,grp:null,cast:[],mixers:[],dur:0,w:0,plate:null,spk:null,
- audio:null,listener:null,buf:null,loading:false,start:0,pausedAt:0,playing:false,muted:false,show:false,want:false,leftAt:-1e9,hinted:false};
-GK.blocks=(lx,lz)=>{for(const c of GK.cast){if(!c.lp)continue;if(Math.hypot(lx-c.lp[0],lz-c.lp[1])<.55)return true;}return false;};
-(async()=>{try{
- const [{GLTFLoader},{MeshoptDecoder}]=await Promise.all([import('three/addons/loaders/GLTFLoader.js'),import('three/addons/libs/meshopt_decoder.module.js')]);
- const ld=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
- const files=[['gakupo','gakupo_duet.glb'],['luka','luka_duet.glb']];
- const gl=await Promise.all(files.map(f=>ld.loadAsync(f[1])));
- const grp=new THREE.Group();grp.name='Bankogarashi_Duet';add(grp,GK.pos[0],GK.pos[1],SY,GK.face);grp.scale.setScalar(GK_SCALE);GK.grp=grp;
- gl.forEach((g,i)=>{const o=g.scene;o.name=files[i][0];grp.add(o);if(GK.size[o.name])o.scale.setScalar(GK.size[o.name]);
-  o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;c.frustumCulled=false;
-   for(const m of [].concat(c.material)){m.envMapIntensity=.6;m.roughness=Math.max(m.roughness??.85,.6);}}});
-  const mx=new THREE.AnimationMixer(o);
-  const duet=mx.clipAction(THREE.AnimationClip.findByName(g.animations,'Bankogarashi_Duet')||g.animations[0]);duet.timeScale=0;duet.play();duet.setEffectiveWeight(0);
-  const ic=THREE.AnimationClip.findByName(g.animations,'Idle');const idle=ic?mx.clipAction(ic):null;if(idle){idle.play();idle.setEffectiveWeight(1);}
-  GK.dur=Math.max(GK.dur,duet.getClip().duration);
-  const center=o.getObjectByName('Center')||o;
-  // 클릭 판정용 보이지 않는 원기둥 (몸 전체, 센터 뼈를 따라 이동)
-  const hit=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,1.9,12),new THREE.MeshBasicMaterial({visible:false}));hit.position.y=.15;center.add(hit);
-  GK.cast.push({name:files[i][0],obj:o,mx,duet,idle,center,hit,lp:null});});
- // name plate + sound source: follow the midpoint between the two dancers
- {const c=document.createElement('canvas');c.width=640;c.height=170;const q=c.getContext('2d');
-  GK.plateCtx={c,q};const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false,toneMapped:false}));sp.scale.set(1.35,.36,1);grp.add(sp);GK.plate=sp;gkPlateHint('');
-  GK.spk=new THREE.Object3D();grp.add(GK.spk);}
- if(typeof ao!=='undefined'&&ao&&!ao.__spritesOff){const ov=ao.overrideVisibility.bind(ao);ao.overrideVisibility=function(){ov();this.scene.traverse(o=>{if(o.isSprite)o.visible=false;});};ao.__spritesOff=true;}
- gkUI();
- GK.dbg=()=>({inHall,stage,stageAnim:!!stageAnim,show:GK.show,want:GK.want,muted:GK.muted,playing:GK.playing,w:+GK.w.toFixed(2),ctx:GK.listener&&GK.listener.context.state,btn:$('#gkBtn')&&$('#gkBtn').textContent});
- window.__gakupo=GK;
-}catch(e){console.warn('Bankogarashi duet not loaded',e);}})();
-// 이름판: 「WORLDS」 버튼처럼 어두운 청록 알약 + 빛나는 청록 테두리 + 흰 글자
-function gkPlateHint(t){if(!GK.plateCtx)return;const {c,q}=GK.plateCtx;q.clearRect(0,0,c.width,c.height);
- const pill=()=>{q.beginPath();q.roundRect(16,16,608,138,69);};
- q.save();pill();q.fillStyle='rgba(7,24,32,.86)';q.shadowColor='rgba(60,230,215,.85)';q.shadowBlur=18;q.fill();q.restore();
- const gr=q.createLinearGradient(0,16,0,154);gr.addColorStop(0,'rgba(80,240,225,.16)');gr.addColorStop(1,'rgba(80,240,225,0)');pill();q.fillStyle=gr;q.fill();
- q.save();pill();q.lineWidth=4;q.strokeStyle='#4fe8d8';q.shadowColor='#3fe0d0';q.shadowBlur=16;q.stroke();q.stroke();q.restore();
- q.textAlign='center';q.textBaseline='middle';
- q.save();q.font='bold 40px sans-serif';q.fillStyle='#ffffff';q.shadowColor='rgba(80,240,225,.55)';q.shadowBlur=8;q.fillText(GK.title,320,t?62:85);q.restore();
- if(t){q.font='bold 28px sans-serif';q.fillStyle='#9ff5ea';q.fillText(t,320,116);}
- GK.plate.material.map.needsUpdate=true;}
-// 오디오: 첫 사용자 입력에서 컨텍스트를 열고(자동재생 정책), 공연을 요청하면 음원을 받습니다.
-function gkInitAudio(){
- if(GK.listener||!GK.grp)return;
- GK.listener=new THREE.AudioListener();camera.add(GK.listener);
- GK.audio=new THREE.PositionalAudio(GK.listener);GK.audio.setRefDistance(3.5*GK_SCALE);GK.audio.setRolloffFactor(1.4);GK.audio.setMaxDistance(60);GK.audio.setLoop(true);GK.audio.setVolume(0);
- GK.spk.add(GK.audio);}
-function gkLoadAudio(){if(GK.buf||GK.loading||!GK.audio)return;GK.loading=true;
- new THREE.AudioLoader().load('../audio/b02.m4a',buf=>{GK.buf=buf;GK.audio.setBuffer(buf);gkUI();},undefined,e=>{GK.loading=false;console.warn('b02 audio',e);gkUI();});}
-function gkTime(){if(GK.playing&&GK.buf)return (GK.listener.context.currentTime-GK.start)%GK.buf.duration;return GK.pausedAt;}
-function gkPlay(){if(!GK.buf||GK.playing||GK.muted)return;const ctx=GK.listener.context;if(ctx.state==='suspended')ctx.resume();
- GK.audio.offset=GK.pausedAt;GK.audio.play();GK.start=ctx.currentTime-GK.pausedAt;GK.playing=true;}
-function gkPause(){if(!GK.playing)return;GK.pausedAt=gkTime();GK.audio.pause();GK.playing=false;}
-function gkFade(v,sec){if(!GK.audio)return;const gn=GK.audio.gain.gain,now=GK.listener.context.currentTime;gn.cancelScheduledValues(now);gn.setValueAtTime(gn.value,now);gn.linearRampToValueAtTime(v,now+sec);}
-function gkStart(){if(GK.show)return;
- if(!GK.buf){GK.want=true;gkInitAudio();gkLoadAudio();gkUI();return;}   // 음원을 받는 대로 시작
- GK.want=false;GK.show=true;if(performance.now()-GK.leftAt>20000)GK.pausedAt=0;   // 오래 쉬었으면 처음부터
- if(!GK.muted){gkPlay();gkFade(1,.8);}
- toast('🍁 「番凩」 듀엣 공연 시작');gkUI();}
-function gkStop(quiet){GK.want=false;if(!GK.show){gkUI();return;}GK.show=false;GK.leftAt=performance.now();gkFade(0,.9);setTimeout(()=>{if(!GK.show)gkPause();},950);
- if(!quiet)toast('🍁 공연을 멈췄어요');gkUI();}
-function gkToggle(){gkInitAudio();(GK.show||GK.want)?gkStop():gkStart();}
-function gkUI(){const b=$('#gkBtn');
- if(b){b.textContent=!GK.grp?'🍁 듀엣 준비 중…':GK.want?'🍁 음악 불러오는 중…':GK.show?'⏸ 듀엣 공연 멈추기':'▶ 🍁 듀엣 공연';b.classList.toggle('on',GK.show);b.disabled=!GK.grp;}
- const cr=$('#gkCredit');if(cr)cr.classList.toggle('on',GK.show);
- gkPlateHint(GK.show?'⏸ 클릭하면 공연 멈춤':GK.want?'음악 불러오는 중…':'▶ 클릭하면 듀엣 공연 시작');}
-// 버튼(아래 무대 조작 바 끝) + 모션 크레딧
-{const dock=$('#dock');if(dock){const sep=document.createElement('div');sep.className='sep';const b=document.createElement('button');b.id='gkBtn';b.className='gkb';
- b.title='番凩 / Wintry Winds — Motion by Nabix / Durles / Rellis Starlab · Choreo by SEGA & Crypton Future Media';
- b.addEventListener('click',()=>{gkToggle();if((GK.show||GK.want)&&mode==='orbit')focusQuadrant(2);});dock.append(sep,b);
- const cr=document.createElement('div');cr.id='gkCredit';cr.className='ui';
- cr.innerHTML='🎵 番凩 (カバー) · 巡音ルカ・神威がくぽ &nbsp;|&nbsp; 💃 Wintry Winds — Motion by Nabix / Durles / Rellis Starlab · Motion Actors Nabix &amp; Tia Lee · Choreo by SEGA &amp; Crypton Future Media · Motion Retarget by Durles · Facials by Durles / Leomarie &nbsp;|&nbsp; 👗 巡音ルカ 標準服モデル v1.25 — model by ダブルレン (@doublelen72) · © Crypton Future Media, PIAPRO (PCL)';
- document.body.appendChild(cr);
- const st=document.createElement('style');st.textContent=`.gkb{padding:8px 14px;border-radius:11px;font-size:13.5px;font-weight:700;white-space:nowrap;color:#ffe3c2;border:1px solid #f0a058;background:linear-gradient(180deg,rgba(240,160,88,.28),rgba(240,160,88,.12));transition:.2s;cursor:pointer}
+/* ---------- 🎭 season duets (autumn 「番凩」, winter 「四季折の羽」) ---------- */
+// 평소에는 두 사람이 첫 자세로 서서 대기(Idle)하고, 둘 중 하나를 클릭하거나 아래 무대 조작 바의 버튼을 누르면 공연을 시작합니다.
+// 🍁 가을 「番凩 / Wintry Winds」: 神威がくぽ (male part) & 巡音ルカ (female part)
+//    Motion: Wintry Winds (Magical Mirai) — Nabix / Durles / Rellis Starlab, Motion Actors Nabix & Tia Lee,
+//    Choreo by SEGA & Crypton Future Media, Motion Retarget by Durles, Facials by Durles / Leomarie
+// ❄️ 겨울 「四季折の羽 / Seasonal Feathers」: 鏡音リン & 鏡音レン — Project DIVA F PV를 참고해 새로 만든 안무
+// 각 공연은 사이트 음원(../audio/bXX.m4a)의 시간에 맞춰 구운 모션을 오디오 시계로 재생합니다. 두 사람은 무대(tt)에 붙어 함께 회전·반전됩니다.
+const DUETS=[];let DUO_LISTENER=null;
+function duoListener(){if(!DUO_LISTENER){DUO_LISTENER=new THREE.AudioListener();camera.add(DUO_LISTENER);}return DUO_LISTENER;}
+if(typeof ao!=='undefined'&&ao&&!ao.__spritesOff){const ov=ao.overrideVisibility.bind(ao);ao.overrideVisibility=function(){ov();this.scene.traverse(o=>{if(o.isSprite)o.visible=false;});};ao.__spritesOff=true;}
+function makeDuet(C){
+ const D=Object.assign({grp:null,cast:[],dur:0,w:0,plate:null,spk:null,plateCtx:null,audio:null,listener:null,buf:null,loading:false,start:0,pausedAt:0,
+  playing:false,muted:false,show:false,want:false,leftAt:-1e9,hinted:false},C);
+ DUETS.push(D);
+ D.blocks=(lx,lz)=>{for(const c of D.cast){if(!c.lp)continue;if(Math.hypot(lx-c.lp[0],lz-c.lp[1])<.55)return true;}return false;};
+ (async()=>{try{
+  const [{GLTFLoader},{MeshoptDecoder}]=await Promise.all([import('three/addons/loaders/GLTFLoader.js'),import('three/addons/libs/meshopt_decoder.module.js')]);
+  const ld=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  const gl=await Promise.all(D.files.map(f=>ld.loadAsync(f[1])));
+  const grp=new THREE.Group();grp.name=D.clip;add(grp,D.pos[0],D.pos[1],SY,D.face);grp.scale.setScalar(GK_SCALE);D.grp=grp;
+  gl.forEach((g,i)=>{const o=g.scene;o.name=D.files[i][0];grp.add(o);if(D.size&&D.size[o.name])o.scale.setScalar(D.size[o.name]);
+   o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;c.frustumCulled=false;
+    for(const m of [].concat(c.material)){m.envMapIntensity=.6;m.roughness=Math.max(m.roughness??.85,.6);}}});
+   const mx=new THREE.AnimationMixer(o);
+   const duet=mx.clipAction(THREE.AnimationClip.findByName(g.animations,D.clip)||g.animations[0]);duet.timeScale=0;duet.play();duet.setEffectiveWeight(0);
+   const ic=THREE.AnimationClip.findByName(g.animations,'Idle');const idle=ic?mx.clipAction(ic):null;if(idle){idle.play();idle.setEffectiveWeight(1);}
+   D.dur=Math.max(D.dur,duet.getClip().duration);
+   const center=o.getObjectByName('Center')||o;
+   // 클릭 판정용 보이지 않는 원기둥 (몸 전체, 센터 뼈를 따라 이동)
+   const hit=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,1.9,12),new THREE.MeshBasicMaterial({visible:false}));hit.position.y=.15;center.add(hit);
+   D.cast.push({name:D.files[i][0],obj:o,mx,duet,idle,center,hit,lp:null});});
+  // name plate + sound source: follow the midpoint between the two dancers
+  {const c=document.createElement('canvas');c.width=640;c.height=170;const q=c.getContext('2d');
+   D.plateCtx={c,q};const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;
+   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false,toneMapped:false}));sp.scale.set(1.35,.36,1);grp.add(sp);D.plate=sp;D.plateHint('');
+   D.spk=new THREE.Object3D();grp.add(D.spk);}
+  if(typeof ao!=='undefined'&&ao&&!ao.__spritesOff){const ov=ao.overrideVisibility.bind(ao);ao.overrideVisibility=function(){ov();this.scene.traverse(o=>{if(o.isSprite)o.visible=false;});};ao.__spritesOff=true;}
+  D.ui();
+  D.dbg=()=>({inHall,stage,stageAnim:!!stageAnim,show:D.show,want:D.want,muted:D.muted,playing:D.playing,w:+D.w.toFixed(2),ctx:D.listener&&D.listener.context.state,btn:$('#'+D.id+'Btn')&&$('#'+D.id+'Btn').textContent});
+  if(D.global)window[D.global]=D;
+ }catch(e){console.warn(D.clip+' duet not loaded',e);}})();
+ // 이름판: 「WORLDS」 버튼처럼 어두운 청록 알약 + 빛나는 청록 테두리 + 흰 글자
+ D.plateHint=t=>{if(!D.plateCtx)return;const {c,q}=D.plateCtx;q.clearRect(0,0,c.width,c.height);
+  const pill=()=>{q.beginPath();q.roundRect(16,16,608,138,69);};
+  q.save();pill();q.fillStyle='rgba(7,24,32,.86)';q.shadowColor='rgba(60,230,215,.85)';q.shadowBlur=18;q.fill();q.restore();
+  const gr=q.createLinearGradient(0,16,0,154);gr.addColorStop(0,'rgba(80,240,225,.16)');gr.addColorStop(1,'rgba(80,240,225,0)');pill();q.fillStyle=gr;q.fill();
+  q.save();pill();q.lineWidth=4;q.strokeStyle='#4fe8d8';q.shadowColor='#3fe0d0';q.shadowBlur=16;q.stroke();q.stroke();q.restore();
+  q.textAlign='center';q.textBaseline='middle';
+  q.save();q.font='bold 40px sans-serif';q.fillStyle='#ffffff';q.shadowColor='rgba(80,240,225,.55)';q.shadowBlur=8;q.fillText(D.title,320,t?62:85);q.restore();
+  if(t){q.font='bold 28px sans-serif';q.fillStyle='#9ff5ea';q.fillText(t,320,116);}
+  D.plate.material.map.needsUpdate=true;};
+ // 오디오: 첫 사용자 입력에서 컨텍스트를 열고(자동재생 정책), 공연을 요청하면 음원을 받습니다.
+ D.initAudio=()=>{if(D.listener||!D.grp)return;
+  D.listener=duoListener();
+  D.audio=new THREE.PositionalAudio(D.listener);D.audio.setRefDistance(3.5*GK_SCALE);D.audio.setRolloffFactor(1.4);D.audio.setMaxDistance(60);D.audio.setLoop(true);D.audio.setVolume(0);
+  D.spk.add(D.audio);};
+ D.loadAudio=()=>{if(D.buf||D.loading||!D.audio)return;D.loading=true;
+  new THREE.AudioLoader().load(D.song,buf=>{D.buf=buf;D.audio.setBuffer(buf);D.ui();},undefined,e=>{D.loading=false;console.warn(D.song,e);D.ui();});};
+ D.time=()=>{if(D.playing&&D.buf)return (D.listener.context.currentTime-D.start)%D.buf.duration;return D.pausedAt;};
+ D.play=()=>{if(!D.buf||D.playing||D.muted)return;const ctx=D.listener.context;if(ctx.state==='suspended')ctx.resume();
+  D.audio.offset=D.pausedAt;D.audio.play();D.start=ctx.currentTime-D.pausedAt;D.playing=true;};
+ D.pause=()=>{if(!D.playing)return;D.pausedAt=D.time();D.audio.pause();D.playing=false;};
+ D.fade=(v,sec)=>{if(!D.audio)return;const gn=D.audio.gain.gain,now=D.listener.context.currentTime;gn.cancelScheduledValues(now);gn.setValueAtTime(gn.value,now);gn.linearRampToValueAtTime(v,now+sec);};
+ D.begin=()=>{if(D.show)return;
+  for(const o of DUETS)if(o!==D&&(o.show||o.want))o.stop(true);   // 한 번에 한 공연만
+  if(!D.buf){D.want=true;D.initAudio();D.loadAudio();D.ui();return;}   // 음원을 받는 대로 시작
+  D.want=false;D.show=true;if(performance.now()-D.leftAt>20000)D.pausedAt=0;   // 오래 쉬었으면 처음부터
+  if(!D.muted){D.play();D.fade(1,.8);}
+  toast(D.emoji+' '+D.startMsg);D.ui();};
+ D.stop=quiet=>{D.want=false;if(!D.show){D.ui();return;}D.show=false;D.leftAt=performance.now();D.fade(0,.9);setTimeout(()=>{if(!D.show)D.pause();},950);
+  if(!quiet)toast(D.emoji+' 공연을 멈췄어요');D.ui();};
+ D.toggle=()=>{D.initAudio();(D.show||D.want)?D.stop():D.begin();};
+ D.ui=()=>{const b=$('#'+D.id+'Btn');
+  if(b){b.textContent=!D.grp?D.emoji+' 듀엣 준비 중…':D.want?D.emoji+' 음악 불러오는 중…':D.show?'⏸ '+D.label+' 멈추기':'▶ '+D.emoji+' '+D.label;b.classList.toggle('on',D.show);b.disabled=!D.grp;}
+  const cr=$('#'+D.id+'Credit');if(cr)cr.classList.toggle('on',D.show);
+  D.plateHint(D.show?'⏸ 클릭하면 공연 멈춤':D.want?'음악 불러오는 중…':'▶ 클릭하면 듀엣 공연 시작');};
+ // 버튼(아래 무대 조작 바 끝) + 크레딧
+ {const dock=$('#dock');if(dock){const sep=document.createElement('div');sep.className='sep';const b=document.createElement('button');b.id=D.id+'Btn';b.className='gkb '+D.id+'b';
+  b.title=D.btnTitle;
+  b.addEventListener('click',()=>{D.toggle();if((D.show||D.want)&&mode==='orbit')focusQuadrant(D.q);});dock.append(sep,b);
+  const cr=document.createElement('div');cr.id=D.id+'Credit';cr.className='ui duoCredit';cr.innerHTML=D.credit;document.body.appendChild(cr);}}
+ // 두 사람 직접 클릭 (드래그는 무시, 뒤의 모래시계보다 앞에 있을 때만) + 마우스를 올리면 손가락 커서
+ {let down=null;const rc=new THREE.Raycaster(),ndc=new THREE.Vector2();
+  const hitTest=e=>{if(!D.grp||!D.grp.visible)return false;ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);rc.setFromCamera(ndc,camera);
+   const g=rc.intersectObjects(D.cast.map(c=>c.hit),false);if(!g.length)return false;const h=rc.intersectObjects([hg,hgMed],true);return !h.length||g[0].distance<h[0].distance;};
+  canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};D.initAudio();});
+  canvas.addEventListener('pointerup',e=>{if(!down||!inHall)return;const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y)>6;down=null;if(!moved&&hitTest(e))D.toggle();});
+  D.hitTest=hitTest;}
+ const _V=new THREE.Vector3(),_A=new THREE.Vector3(),_B=new THREE.Vector3();
+ D.tick=dt=>{
+  if(!D.grp||!D.cast.length)return;
+  const onFace=stageAnim?stageAnim.to===0:stage===0;   // 중세 무대로 바뀌면 정지
+  D.grp.visible=stage===0||!!stageAnim;
+  if(D.want&&D.buf&&inHall&&onFace)D.begin();
+  if(D.show&&(!inHall||!onFace))D.stop(true);
+  if(inHall&&!D.hinted&&mode==='walk'){D.grp.getWorldPosition(_V);if(Math.hypot(A.x-_V.x,A.z-_V.z)<6){D.hinted=true;toast(D.emoji+' '+D.hint);}}
+  // 대기 ↔ 공연 크로스페이드, 두 사람 모두 같은 오디오 시계
+  D.w+=((D.show?1:0)-D.w)*Math.min(1,dt*2.5);
+  if(D.show&&!D.playing)D.pausedAt=(D.pausedAt+dt)%D.dur;   // 음악을 꺼도 공연은 계속
+  const t=Math.min(D.time(),D.dur-1e-3);
+  for(const c of D.cast){c.duet.setEffectiveWeight(D.w);if(c.idle)c.idle.setEffectiveWeight(1-D.w);c.duet.time=t;c.mx.update(dt);}
+  // 충돌용 위치(무대 좌표), 이름표·소리 위치(두 사람 사이)
+  D.grp.updateMatrixWorld(true);
+  for(const c of D.cast){c.center.getWorldPosition(_V);c.lp=toLocal(_V.x,_V.z);}
+  D.cast[0].center.getWorldPosition(_A);D.cast[1].center.getWorldPosition(_B);_V.addVectors(_A,_B).multiplyScalar(.5);
+  D.grp.worldToLocal(_V);D.plate.position.set(_V.x,D.plateY||2.25,_V.z);D.spk.position.set(_V.x,1.5,_V.z);
+  D.grp.getWorldPosition(_V);D.plate.visible=camera.position.distanceTo(_V)<18;};
+ return D;}
+const GK=makeDuet({id:'gk',global:'__gakupo',emoji:'🍁',q:2,label:'듀엣 공연',clip:'Bankogarashi_Duet',song:'../audio/b02.m4a',
+ title:'神威がくぽ & 巡音ルカ · 番凩',pos:[-2.3,5.4],face:0.087,size:{luka:1.12},
+ files:[['gakupo','gakupo_duet.glb'],['luka','luka_duet.glb']],startMsg:'「番凩」 듀엣 공연 시작',hint:'가쿠포나 루카를 클릭하면 듀엣이 시작돼요',
+ btnTitle:'番凩 / Wintry Winds — Motion by Nabix / Durles / Rellis Starlab · Choreo by SEGA & Crypton Future Media',
+ credit:'🎵 番凩 (カバー) · 巡音ルカ・神威がくぽ &nbsp;|&nbsp; 💃 Wintry Winds — Motion by Nabix / Durles / Rellis Starlab · Motion Actors Nabix &amp; Tia Lee · Choreo by SEGA &amp; Crypton Future Media · Motion Retarget by Durles · Facials by Durles / Leomarie &nbsp;|&nbsp; 👗 巡音ルカ 標準服モデル v1.25 — model by ダブルレン (@doublelen72) · © Crypton Future Media, PIAPRO (PCL)'});
+const WF=makeDuet({id:'wf',global:'__feathers',emoji:'❄️',q:3,label:'린·렌 공연',clip:'Seasonal_Feathers',song:'../audio/b05.m4a',
+ title:'鏡音リン & 鏡音レン · 四季折の羽',pos:[2.3,5.4],face:-0.087,plateY:2.0,
+ files:[['rin','rin_sf.glb'],['len','len_sf.glb']],startMsg:'「四季折の羽」 린·렌 공연 시작',hint:'린이나 렌을 클릭하면 「四季折の羽」 공연이 시작돼요',
+ btnTitle:'四季折の羽 / Seasonal Feathers — 鏡音リン・鏡音レン (PV 참고 창작 안무)',
+ credit:'🎵 四季折の羽 · ひとしずくP×やま△ feat. 鏡音リン・鏡音レン &nbsp;|&nbsp; 💃 Project DIVA F 「Seasonal Feathers」 PV를 참고한 창작 안무 &nbsp;|&nbsp; 👗 鏡音リン Ver1.00 — model by NOKA (@noka35520398) · つかさ式鏡音レン Ver1.0a — model by つかさ · © Crypton Future Media, PIAPRO (PCL)'});
+{const st=document.createElement('style');st.textContent=`.gkb{padding:8px 14px;border-radius:11px;font-size:13.5px;font-weight:700;white-space:nowrap;color:#ffe3c2;border:1px solid #f0a058;background:linear-gradient(180deg,rgba(240,160,88,.28),rgba(240,160,88,.12));transition:.2s;cursor:pointer}
 .gkb:hover{background:rgba(240,160,88,.4)}.gkb.on{background:#f0a058;color:#1a1010}.gkb:disabled{opacity:.5;cursor:wait}
+.gkb.wfb{color:#e8f4ff;border-color:#9fd2f5;background:linear-gradient(180deg,rgba(159,210,245,.28),rgba(159,210,245,.12))}
+.gkb.wfb:hover{background:rgba(159,210,245,.4)}.gkb.wfb.on{background:#9fd2f5;color:#0c1824}
 body.medieval .gkb{display:none}
-#gkCredit{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);max-width:min(92vw,980px);padding:6px 14px;border-radius:10px;background:rgba(12,10,18,.62);color:rgba(255,236,214,.9);font-size:11.5px;line-height:1.45;text-align:center;z-index:60;pointer-events:none;display:none}
-body.in-hall #gkCredit.on{display:block}
-@media (max-width:820px){#gkCredit{bottom:64px;font-size:10px}}`;document.head.appendChild(st);gkUI();}}
-// 두 사람 직접 클릭 (드래그는 무시, 뒤의 모래시계보다 앞에 있을 때만) + 마우스를 올리면 손가락 커서
-{let down=null;const rc=new THREE.Raycaster(),ndc=new THREE.Vector2();
- const hitTest=e=>{if(!GK.grp||!GK.grp.visible)return false;ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);rc.setFromCamera(ndc,camera);
-  const g=rc.intersectObjects(GK.cast.map(c=>c.hit),false);if(!g.length)return false;const h=rc.intersectObjects([hg,hgMed],true);return !h.length||g[0].distance<h[0].distance;};
- canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};gkInitAudio();});
- canvas.addEventListener('pointerup',e=>{if(!down||!inHall)return;const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y)>6;down=null;if(!moved&&hitTest(e))gkToggle();});
- let hovT=0;canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||!inHall)return;const n=performance.now();if(n-hovT<80)return;hovT=n;canvas.style.cursor=hitTest(e)?'pointer':'';});
- GK.hitTest=hitTest;}
-addEventListener('pointerdown',()=>gkInitAudio(),{passive:true});
-addEventListener('keydown',e=>{gkInitAudio();if(!inHall||(e.target&&e.target.tagName==='INPUT'))return;
- if(e.code==='KeyG'&&GK.audio){GK.muted=!GK.muted;if(GK.muted){gkFade(0,.3);setTimeout(()=>{if(GK.muted)gkPause();},350);toast('🍁 공연 음악 끔 (G)');}
-  else{if(GK.show){gkPlay();gkFade(1,.6);}toast('🍁 공연 음악 켬 (G)');}}});
-const _gkV=new THREE.Vector3(),_gkA=new THREE.Vector3(),_gkB=new THREE.Vector3();
-function gkTick(dt){
- if(!GK.grp||!GK.cast.length)return;
- const onFace=stageAnim?stageAnim.to===0:stage===0;   // 중세 무대로 바뀌면 정지
- GK.grp.visible=stage===0||!!stageAnim;
- if(GK.want&&GK.buf&&inHall&&onFace)gkStart();
- if(GK.show&&(!inHall||!onFace))gkStop(true);
- if(inHall&&!GK.hinted&&mode==='walk'){GK.grp.getWorldPosition(_gkV);if(Math.hypot(A.x-_gkV.x,A.z-_gkV.z)<6){GK.hinted=true;toast('🍁 가쿠포나 루카를 클릭하면 듀엣이 시작돼요');}}
- // 대기 ↔ 공연 크로스페이드, 두 사람 모두 같은 오디오 시계
- GK.w+=((GK.show?1:0)-GK.w)*Math.min(1,dt*2.5);
- if(GK.show&&!GK.playing)GK.pausedAt=(GK.pausedAt+dt)%GK.dur;   // 음악을 꺼도 공연은 계속
- const t=Math.min(gkTime(),GK.dur-1e-3);
- for(const c of GK.cast){c.duet.setEffectiveWeight(GK.w);if(c.idle)c.idle.setEffectiveWeight(1-GK.w);c.duet.time=t;c.mx.update(dt);}
- // 충돌용 위치(무대 좌표), 이름표·소리 위치(두 사람 사이)
- GK.grp.updateMatrixWorld(true);
- for(const c of GK.cast){c.center.getWorldPosition(_gkV);c.lp=toLocal(_gkV.x,_gkV.z);}
- GK.cast[0].center.getWorldPosition(_gkA);GK.cast[1].center.getWorldPosition(_gkB);_gkV.addVectors(_gkA,_gkB).multiplyScalar(.5);
- GK.grp.worldToLocal(_gkV);GK.plate.position.set(_gkV.x,2.25,_gkV.z);GK.spk.position.set(_gkV.x,1.5,_gkV.z);
- GK.grp.getWorldPosition(_gkV);GK.plate.visible=camera.position.distanceTo(_gkV)<18;
-}
+.duoCredit{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);max-width:min(92vw,980px);padding:6px 14px;border-radius:10px;background:rgba(12,10,18,.62);color:rgba(255,236,214,.9);font-size:11.5px;line-height:1.45;text-align:center;z-index:60;pointer-events:none;display:none}
+body.in-hall .duoCredit.on{display:block}
+@media (max-width:820px){.duoCredit{bottom:64px;font-size:10px}}`;document.head.appendChild(st);for(const d of DUETS)d.ui();}
+{let hovT=0;canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||!inHall)return;const n=performance.now();if(n-hovT<80)return;hovT=n;canvas.style.cursor=DUETS.some(d=>d.hitTest(e))?'pointer':'';});}
+addEventListener('pointerdown',()=>{for(const d of DUETS)d.initAudio();},{passive:true});
+addEventListener('keydown',e=>{for(const d of DUETS)d.initAudio();if(!inHall||(e.target&&e.target.tagName==='INPUT'))return;
+ if(e.code==='KeyG'&&DUETS.some(d=>d.audio)){const m=!DUETS[0].muted;
+  for(const d of DUETS){if(!d.audio)continue;d.muted=m;if(m){d.fade(0,.3);setTimeout(()=>{if(d.muted)d.pause();},350);}else if(d.show){d.play();d.fade(1,.6);}}
+  toast(m?'🎵 공연 음악 끔 (G)':'🎵 공연 음악 켬 (G)');}});
+function gkTick(dt){for(const d of DUETS)d.tick(dt);}
 
 /* ---------- loop ---------- */
 setSky(1);setMode('orbit');$('#help').innerHTML=HELP.orbit;
