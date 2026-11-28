@@ -203,6 +203,8 @@ body.in-hall #brand{pointer-events:auto}
   <button class="vb" id="exitHall" style="color:#f1d29b">ℹ️ 공연장 소개</button>
   <div class="t">VIEW</div>
   <button class="vb on" data-mode="orbit">🌀 둘러보기</button>
+  <button class="vb" data-mode="walk">🚶 걷기 (플레이어)</button>
+  <button class="vb" id="pickBtn">🎭 캐릭터 바꾸기</button>
   <button class="vb" data-mode="top">📐 도면 보기</button>
   <button class="vb" data-mode="cinema">🎬 시네마</button>
   <div class="t">SKY</div>
@@ -298,12 +300,12 @@ body.in-hall #brand{pointer-events:auto}
     <div class="steps">
       <div class="step reveal"><h3>입장하기</h3><p>‘입장하기’를 누르면 공연장 위에서 무대를 내려다보며 들어갑니다.</p></div>
       <div class="step reveal"><h3>둘러보기 · 도면</h3><p>드래그로 돌려 보고 휠로 확대하세요. ‘도면 보기’는 위에서 내려다본 배치를 보여줘요.</p></div>
-      <div class="step reveal"><h3>가을 구역 듀엣</h3><p>가을 구역의 가쿠포와 렌을 누르면 「番凩」 듀엣 공연이 시작돼요. 다시 누르면 멈춰요.</p></div>
+      <div class="step reveal"><h3>아바타로 걷기</h3><p>‘걷기’를 누르면 아바타가 나타납니다. 무대 위와 객석 계단을 자유롭게 걸어 보세요.</p></div>
       <div class="step reveal"><h3>모래시계 돌리기</h3><p>모래시계를 누르면 뒤집히며 무대가 90° 회전합니다. 하늘은 밤·노을·낮 중에서 고를 수 있어요.</p></div>
     </div>
     <div class="keys reveal">
-      <div><h4>PC</h4>둘러보기: 드래그 회전 · 휠 확대 · 우클릭 드래그 이동<br>가을 구역 가쿠포·렌 클릭: 듀엣 공연 시작/정지 · <kbd>G</kbd> 음악 켜기/끄기</div>
-      <div><h4>MOBILE</h4>둘러보기: 한 손가락 회전 · 두 손가락 확대<br>가을 구역 가쿠포·렌 탭: 듀엣 공연 시작/정지</div>
+      <div><h4>PC</h4>둘러보기: 드래그 회전 · 휠 확대 · 우클릭 드래그 이동<br>걷기: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> · <kbd>Shift</kbd> 달리기 · <kbd>Space</kbd> 점프</div>
+      <div><h4>MOBILE</h4>둘러보기: 한 손가락 회전 · 두 손가락 확대<br>걷기: 왼쪽 아래 조이스틱 · 화면 드래그로 카메라 회전</div>
     </div>
   </section>
 
@@ -1255,8 +1257,7 @@ function flyTo(pos,target,dur=1.9){const t0=controls.target.clone(),t1=target.cl
  const s0=new THREE.Spherical().setFromVector3(camera.position.clone().sub(t0)),s1=new THREE.Spherical().setFromVector3(pos.clone().sub(t1));
  let dth=s1.theta-s0.theta;dth=Math.atan2(Math.sin(dth),Math.cos(dth));fly={t:0,dur,t0,t1,s0,s1,dth};}
 let walkIn=1;
-function setMode(m){if(m==='walk')m='orbit';   // 플레이어 걷기(아바타)는 상시 꺼짐 — 무대에는 공연 캐릭터만
- const prev=mode;mode=m;document.querySelectorAll('.vb[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+function setMode(m){const prev=mode;mode=m;document.querySelectorAll('.vb[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
  if(m==='walk'&&charIdx<0){openPicker();return;}if(m==='walk')useChar(charIdx);$('#help').innerHTML=HELP[m];avatar.visible=m==='walk';controls.enabled=m!=='walk';controls.autoRotate=m==='cinema';controls.autoRotateSpeed=.55;
  $('#joy').style.display=(m==='walk'&&MOBILE)?'block':'none';
  if(m==='top')flyTo(new THREE.Vector3(0,35,.01),new THREE.Vector3(0,0,0));
@@ -1477,7 +1478,7 @@ function updateRemotes(dt,t){
  NET.frame=(NET.frame||0)+1;NET.lodT=(NET.lodT||0)-dt;
  if(NET.lodT<=0){NET.lodT=.5;const cp=camera.position,arr=[...NET.remotes.values()];for(const r of arr)r.d=Math.hypot(r.x-cp.x,r.z-cp.z);arr.sort((a,b)=>a.d-b.d);
   arr.forEach((r,i)=>{const tier=(i<6&&r.d<20)?0:i<15?1:2;if(r.tier!==tier){r.tier=tier;setTier(r.rig,tier);}});}
- for(const r of NET.remotes.values()){r.rig.root.visible=false;const k=Math.min(1,dt*10);r.x+=(r.tx-r.x)*k;r.y+=(r.ty-r.y)*k;r.z+=(r.tz-r.z)*k;let d=r.tyaw-r.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));r.yaw+=d*k;
+ for(const r of NET.remotes.values()){const k=Math.min(1,dt*10);r.x+=(r.tx-r.x)*k;r.y+=(r.ty-r.y)*k;r.z+=(r.tz-r.z)*k;let d=r.tyaw-r.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));r.yaw+=d*k;
   r.rig.root.position.set(r.x,r.y,r.z);r.rig.root.rotation.y=0;
   if(r.mv)r.walk+=dt*9;else r.walk*=.85;const air=r.ty>ground(r.tx,r.tz)+.08;r.rig.yawNow=r.yaw;if(r.tier!==2&&!(r.tier===1&&NET.frame%2))animatePuppet(r.rig,r.walk,r.mv,air,t,r.x*3.1);
   const nm=(r.by&&NET.names.get(r.by))||(r.mine?'나 (다른 탭)':'참가자');setLabel(r.lab,nm+(r.guest?' · 게스트':''),r.c?'#cfc8ca':'#c98a5e');}
@@ -1520,8 +1521,8 @@ function openPicker(){if(!portraits){portraits=true;document.querySelectorAll('.
 function closePicker(){$('#pickWrap').classList.remove('on');}
 document.querySelectorAll('.pk button').forEach(b=>b.addEventListener('click',()=>{useChar(+b.dataset.char);closePicker();A.x=2.2;A.z=10.6;A.y=0;setMode('walk');toast(CHARS[charIdx].name+' 플레이어로 입장!');}));
 $('#pickSkip').addEventListener('click',()=>{closePicker();if(mode==='walk')setMode('orbit');});
-$('#pickBtn')&&$('#pickBtn').addEventListener('click',openPicker);
-heroCam();{const h=location.hash.slice(1);if(['home','about','zones','venue','guide','faq'].includes(h)){shotsDone=true;try{makeShots();}catch(err){}}else{doEnter({});camera.position.set(0,13,25);controls.target.set(0,1.2,0);fly=null;controls.update();}}   // 플레이어 캐릭터 선택 창은 띄우지 않음 (걷기 상시 꺼짐)
+$('#pickBtn').addEventListener('click',openPicker);
+heroCam();{const h=location.hash.slice(1);if(['home','about','zones','venue','guide','faq'].includes(h)){shotsDone=true;try{makeShots();}catch(err){}}else{doEnter({});camera.position.set(0,13,25);controls.target.set(0,1.2,0);fly=null;controls.update();setTimeout(openPicker,300);}}
 const clock=new THREE.Clock(),sandBar=$('#sand');const tmpV=new THREE.Vector3();
 /* ================= stage switching (flip the whole disc), effects, quality, perf ================= */
 const STAGES=[{name:'사계절 무대',icon:'🌸'},{name:'중세 왕궁 무대',icon:'👑'}];
