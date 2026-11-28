@@ -1304,18 +1304,18 @@ function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clear
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);bloom.setSize(innerWidth,innerHeight);if(ao)ao.setSize(innerWidth,innerHeight);});
 
-/* ---------- 🍁 AUTUMN: 「番凩 / Wintry Winds」 duet — 神威がくぽ (male part) & 鏡音レン (female part) ---------- */
+/* ---------- 🍁 AUTUMN: 「番凩 / Wintry Winds」 duet — 神威がくぽ (male part) & 巡音ルカ (female part) ---------- */
 // 평소에는 두 사람이 첫 자세로 서서 대기(Idle)하고, 둘 중 하나를 클릭하거나 아래 「🍁 듀엣 공연」 버튼을 누르면 공연을 시작합니다.
 // 모션: Wintry Winds (Magical Mirai) — Motion by Nabix / Durles / Rellis Starlab, Motion Actors Nabix & Tia Lee,
 //       Choreo by SEGA & Crypton Future Media, Motion Retarget by Durles, Facials by Durles / Leomarie
 // 사이트 음원 ../audio/b02.m4a 의 시간에 맞춰 구운 모션을 오디오 시계로 재생합니다. 두 사람은 무대(tt)에 붙어 함께 회전·반전됩니다.
-const GK={title:'神威がくぽ & 鏡音レン · 番凩',pos:[-2.3,5.4],face:0.087,grp:null,cast:[],mixers:[],dur:0,w:0,plate:null,spk:null,
+const GK={title:'神威がくぽ & 巡音ルカ · 番凩',pos:[-2.3,5.4],face:0.087,grp:null,cast:[],mixers:[],dur:0,w:0,plate:null,spk:null,
  audio:null,listener:null,buf:null,loading:false,start:0,pausedAt:0,playing:false,muted:false,show:false,want:false,leftAt:-1e9,hinted:false};
 GK.blocks=(lx,lz)=>{for(const c of GK.cast){if(!c.lp)continue;if(Math.hypot(lx-c.lp[0],lz-c.lp[1])<.55)return true;}return false;};
 (async()=>{try{
  const [{GLTFLoader},{MeshoptDecoder}]=await Promise.all([import('three/addons/loaders/GLTFLoader.js'),import('three/addons/libs/meshopt_decoder.module.js')]);
  const ld=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
- const files=[['gakupo','gakupo_duet.glb'],['len','len_duet.glb']];
+ const files=[['gakupo','gakupo_duet.glb'],['luka','luka_duet.glb']];
  const gl=await Promise.all(files.map(f=>ld.loadAsync(f[1])));
  const grp=new THREE.Group();grp.name='Bankogarashi_Duet';add(grp,GK.pos[0],GK.pos[1],SY,GK.face);grp.scale.setScalar(GK_SCALE);GK.grp=grp;
  gl.forEach((g,i)=>{const o=g.scene;o.name=files[i][0];grp.add(o);
@@ -1379,7 +1379,7 @@ function gkUI(){const b=$('#gkBtn');
  b.title='番凩 / Wintry Winds — Motion by Nabix / Durles / Rellis Starlab · Choreo by SEGA & Crypton Future Media';
  b.addEventListener('click',()=>{gkToggle();if((GK.show||GK.want)&&mode==='orbit')focusQuadrant(2);});dock.append(sep,b);
  const cr=document.createElement('div');cr.id='gkCredit';cr.className='ui';
- cr.innerHTML='🎵 番凩 (カバー) · 巡音ルカ・神威がくぽ &nbsp;|&nbsp; 💃 Wintry Winds — Motion by Nabix / Durles / Rellis Starlab · Motion Actors Nabix &amp; Tia Lee · Choreo by SEGA &amp; Crypton Future Media · Motion Retarget by Durles · Facials by Durles / Leomarie';
+ cr.innerHTML='🎵 番凩 (カバー) · 巡音ルカ・神威がくぽ &nbsp;|&nbsp; 💃 Wintry Winds — Motion by Nabix / Durles / Rellis Starlab · Motion Actors Nabix &amp; Tia Lee · Choreo by SEGA &amp; Crypton Future Media · Motion Retarget by Durles · Facials by Durles / Leomarie &nbsp;|&nbsp; 👗 巡音ルカ: yybple styled megurine luka v2 — model 三目YYB, aple · design KEI · © Crypton Future Media, PIAPRO';
  document.body.appendChild(cr);
  const st=document.createElement('style');st.textContent=`.gkb{padding:8px 14px;border-radius:11px;font-size:13.5px;font-weight:700;white-space:nowrap;color:#ffe3c2;border:1px solid #f0a058;background:linear-gradient(180deg,rgba(240,160,88,.28),rgba(240,160,88,.12));transition:.2s;cursor:pointer}
 .gkb:hover{background:rgba(240,160,88,.4)}.gkb.on{background:#f0a058;color:#1a1010}.gkb:disabled{opacity:.5;cursor:wait}
@@ -1406,7 +1406,7 @@ function gkTick(dt){
  GK.grp.visible=stage===0||!!stageAnim;
  if(GK.want&&GK.buf&&inHall&&onFace)gkStart();
  if(GK.show&&(!inHall||!onFace))gkStop(true);
- if(inHall&&!GK.hinted&&mode==='walk'){GK.grp.getWorldPosition(_gkV);if(Math.hypot(A.x-_gkV.x,A.z-_gkV.z)<6){GK.hinted=true;toast('🍁 가쿠포나 렌을 클릭하면 듀엣이 시작돼요');}}
+ if(inHall&&!GK.hinted&&mode==='walk'){GK.grp.getWorldPosition(_gkV);if(Math.hypot(A.x-_gkV.x,A.z-_gkV.z)<6){GK.hinted=true;toast('🍁 가쿠포나 루카를 클릭하면 듀엣이 시작돼요');}}
  // 대기 ↔ 공연 크로스페이드, 두 사람 모두 같은 오디오 시계
  GK.w+=((GK.show?1:0)-GK.w)*Math.min(1,dt*2.5);
  if(GK.show&&!GK.playing)GK.pausedAt=(GK.pausedAt+dt)%GK.dur;   // 음악을 꺼도 공연은 계속
