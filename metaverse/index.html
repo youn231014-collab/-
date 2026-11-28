@@ -213,7 +213,6 @@ body.in-hall #brand{pointer-events:auto}
   <button class="vb sk" data-sky="2">☀️ 낮</button>
   <div class="t">LIGHT</div>
   <button class="vb on" id="lightBtn">💡 무대 조명 켜짐</button>
-  <button class="vb on" id="beamBtn">🔦 무빙 빔 켜짐</button>
   <button class="vb on" id="fxBtn">✨ 입자 효과 켜짐</button>
   <div class="t">QUALITY</div>
   <div class="qrow"><button class="qb on" data-qm="auto">자동</button><button class="qb" data-qm="2">높음</button><button class="qb" data-qm="0">낮음</button></div>
@@ -610,7 +609,7 @@ const ROW0=15.5,ROW_D=1.15,ROW_H=.24,ROWS=8,ROUT=ROW0+ROWS*ROW_D;let SEATS=0;
   const p=new THREE.Mesh(new THREE.CylinderGeometry(.1,.12,.55,12),pole);p.position.set(x,.28,z);p.castShadow=true;scene.add(p);
   const gl=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,.08,12),glow);gl.position.set(x,.59,z);scene.add(gl);}
 }
-let lightsOn=true,beamsOn=true,isNight=false;
+let lightsOn=true,beamsOn=false,isNight=false;   // 무빙 빔은 상시 꺼짐
 function nightGlow(n){isNight=n;for(const m of lampMats)m.emissiveIntensity=lightsOn?(n?3:.9):0;}
 
 /* ---------- turntable stage ---------- */
@@ -1512,8 +1511,8 @@ let movingNow=false;
 
 function setLights(on){lightsOn=on;nightGlow(isNight);for(const s of spots)s.visible=on;for(const L of lanternLights)L.visible=on;
  const b=$('#lightBtn');b.classList.toggle('on',on);b.textContent=on?'💡 무대 조명 켜짐':'💡 무대 조명 꺼짐';toast(on?'무대 조명 ON':'무대 조명 OFF');}
-function setBeams(on){beamsOn=on;const b=$('#beamBtn');b.classList.toggle('on',on);b.textContent=on?'🔦 무빙 빔 켜짐':'🔦 무빙 빔 꺼짐';}
-$('#lightBtn').addEventListener('click',()=>setLights(!lightsOn));$('#beamBtn').addEventListener('click',()=>setBeams(!beamsOn));
+function setBeams(on){beamsOn=false;}   // 무빙 빔 상시 꺼짐 (버튼·단축키로 켤 수 없음)
+$('#lightBtn').addEventListener('click',()=>setLights(!lightsOn));
 addEventListener('keydown',e=>{if(!inHall)return;if(e.code==='KeyL')setLights(!lightsOn);if(e.code==='KeyB')setBeams(!beamsOn);});
 let portraits=false;
 function openPicker(){if(!portraits){portraits=true;document.querySelectorAll('.pk button').forEach(b=>{try{b.querySelector('img').src=charPortrait(+b.dataset.char);}catch(e){}});}
